@@ -1,0 +1,37 @@
+#Debian
+
+#sudo apt install build-essential gawk gcc-multilib flex git gettext libncurses5-dev libssl-dev python3-distutils zlib1g-dev ccache ecj fastjar file g++ gawk gettext git java-propose-classpath libelf-dev libncurses5-dev libncursesw5-dev libssl-dev unzip wget rsync subversion swig time xsltproc zlib1g-dev mkisofs python signify-openbsd mercurial
+
+
+#ArchLinux
+
+#sudo pacman -Syy autoconf automake bash binutils bison bzip2 fakeroot file findutils flex gawk gcc gettext git grep groff gzip libelf libtool libxslt m4 make ncurses openssl patch pkgconf python rsync sed texinfo time unzip util-linux wget which zlib 
+
+
+
+rm -rf openwrt-imagebuilder-*
+
+wget https://downloads.openwrt.org/releases/21.02.3/targets/x86/64/openwrt-imagebuilder-21.02.3-x86-64.Linux-x86_64.tar.xz
+
+
+tar -J -x -f openwrt-imagebuilder-*.tar.xz
+cp -r files openwrt-imagebuilder-*-x86_64
+cd openwrt-imagebuilder-*/
+
+
+
+packages="atop htop ntp-utils ntpclient arp-scan arp-scan-database batctl-full snmpd vim-full"
+firmware="ath10k-board-qca988x ath10k-firmware-qca988x"
+wifi="wireless-tools wireless-regdb wpad-mesh-wolfssl"
+kmod="kmod-batman-adv kmod-kvm-amd kmod-kvm-x86 kmod-ath kmod-ath10k kmod-ath9k kmod-ath9k-common"
+luci="luci luci-ssl luci-base luci-compat luci-mod-admin-full luci-mod-dashboard luci-mod-network luci-mod-rpc luci-mod-status luci-mod-system luci-app-firewall luci-app-opkg luci-app-snmpd luci-theme-bootstrap"
+remove="-ip6tables -kmod-ip6tables -kmod-nf-conntrack6 -kmod-nf-ipt6 -odhcp6c -odhcpd-ipv6only -luci-proto-ipv6 -dnsmasq -kmod-ppp -kmod-pppoe -kmod-pppox -ppp -ppp-mod-pppoe"
+
+
+make image PROFILE="generic" \
+PACKAGES="$(echo $packages) $(echo $firmware) $(echo $wifi) $(echo $kmod) $(echo $luci) $(echo $remove)" \
+FILES_REMOVE="" \
+FILES="files" \
+DISABLED_SERVICES=""
+ 
+echo "Finish"
