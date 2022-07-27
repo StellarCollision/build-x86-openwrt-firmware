@@ -1,0 +1,78 @@
+#!/bin/bash
+
+
+#prepare os to build
+file_os_release=/etc/os-release
+if ! [ -f "$file_os_release" ]; then
+    echo "Leider exestiert die '$file_os_release' nicht."
+    echo "ABBRUCH"
+    exit
+fi
+
+source /etc/os-release
+os=$ID
+
+case $os in
+
+  debian)
+    sudo apt install -y build-essential gawk gcc-multilib flex git \
+      gettext libncurses5-dev libssl-dev python3-distutils zlib1g-dev \
+      ccache ecj fastjar file g++ gawk gettext git \
+      java-propose-classpath libelf-dev libncurses5-dev \
+      libncursesw5-dev libssl-dev unzip wget rsync subversion swig time \
+      xsltproc zlib1g-dev mkisofs python signify-openbsd mercurial
+    ;;
+  
+  arch)
+    sudo pacman -Syy --noconfirm --needed autoconf automake bash binutils \
+      bison bzip2 fakeroot file findutils flex gawk gcc gettext git \
+      grep groff gzip libelf libtool libxslt m4 make ncurses openssl \
+      patch pkgconf python rsync sed texinfo time unzip util-linux wget which zlib
+    ;;
+  
+  *)
+    echo -n "Dein OS wird nicht unterstuetzt"
+    exit
+    ;;
+
+esac
+
+if ! [ -f "build" ]; then
+  mkdir -p build
+fi
+
+if ! [ -f "bin" ]; then
+  mkdir -p bin
+fi
+
+cp -r config build
+cp -r files build
+
+cd build
+
+#load config
+for config_file in config/*.conf; do
+    if [ -f "$config_file" ]; then
+        source $config_file
+        config_name=$(echo $config_file | sed 's/config\///; s/.conf//')
+
+	if ! [ -f "openwrt-imagebuilder-$openwrt_version-x86-64.Linux-x86_64.tar.xz" ]; then
+          wget https://downloads.openwrt.org/releases/$openwrt_version/targets/x86/64/openwrt-imagebuilder-$openwrt_version-x86-64.Linux-x86_64.tar.xz
+        fi
+
+	tar -J -x -f openwrt-imagebuilder-*.tar.xz
+        cp -r files openwrt-imagebuilder-*-x86_64
+	cd openwrt-imagebuilder-*/
+	make image PROFILE="generic" \
+          PACKAGES="$(echo $packages) $(echo $firmware) $(echo $wifi) $(echo $kmod) $(echo $luci) $(echo $remove)" \
+          FILES_REMOVE="" \
+          FILES="files" \
+          DISABLED_SERVICES=""
+
+        time=$(date '+%Y-%m-%d-%H_%M_%S')
+	mkdir ../../bin/$config_name-$time
+	cp -r bin ../../bin/$config_name-$time
+    fi
+done
+
+echo "Finish"
